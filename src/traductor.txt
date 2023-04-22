@@ -1,0 +1,10 @@
+house,casa
+dog,perro
+homework,tarea
+woman,mujer
+town,pueblo
+yes,si
+she,ella
+he,el
+of,de 
+ability,capacidad
