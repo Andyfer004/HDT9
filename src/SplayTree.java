@@ -4,6 +4,12 @@ import java.util.Map;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.*;
+/**
+ * UNIVERSIDAD DEL VALLE DE GUATEMALA
+ * ALGORITMOS Y ESTRUCTURA DE DATOS
+ * @author Andy Fuentes
+ * @version 2.0
+ */
 
 public class SplayTree<K, V> implements Map<K, V> {
     private Comparator<K> comparator;

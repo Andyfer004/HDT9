@@ -1,5 +1,10 @@
 import java.util.NoSuchElementException;
-
+/**
+ * UNIVERSIDAD DEL VALLE DE GUATEMALA
+ * ALGORITMOS Y ESTRUCTURA DE DATOS
+ * @author Andy Fuentes
+ * @version 2.0
+ */
 public class RedBlackTree<Key extends Comparable<Key>, Value> implements Map <Key,Value> {
 
     private static final boolean RED   = true;

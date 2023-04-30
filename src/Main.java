@@ -4,7 +4,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.lang.Object;
-
+/**
+ * UNIVERSIDAD DEL VALLE DE GUATEMALA
+ * ALGORITMOS Y ESTRUCTURA DE DATOS
+ * @author Andy Fuentes
+ * @version 2.0
+ */
 
 public class Main {
     public static void main(String[] args) {

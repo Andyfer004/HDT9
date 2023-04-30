@@ -1,5 +1,11 @@
 import structure5.*;
 import java.util.HashMap;
+/**
+ * UNIVERSIDAD DEL VALLE DE GUATEMALA
+ * ALGORITMOS Y ESTRUCTURA DE DATOS
+ * @author Andy Fuentes
+ * @version 2.0
+ */
 
 public class Factory<K extends Comparable<K>, V> {
     /**
