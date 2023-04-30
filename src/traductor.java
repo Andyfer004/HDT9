@@ -1,14 +1,6 @@
 import java.util.HashMap;
 
-/**
- * UNIVERSIDAD DEL VALLE DE GUATEMALA
- * ALGORITMOS Y ESTRUCTURA DE DATOS
- * @author GABRIEL ALBERTO PAZ GONZALEZ 221087
- * @version 1.0
- * @date 30/04/2023
- * @source Clase Traductor
- *
- */
+
 
 public class traductor {
     /***

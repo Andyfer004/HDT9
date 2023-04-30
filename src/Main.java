@@ -4,14 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.lang.Object;
-/***
- * UNIVERSIDAD DEL VALLE DE GUATEMALA
- * ALGORITMOS Y ESTRUCTURA DE DATOS
- * @author GABRIEL ALBERTO PAZ GONZALEZ 221087
- * @version 1.0
- * @date 21/04/2023
- * @source Clase Main
- */
+
 
 public class Main {
     public static void main(String[] args) {
