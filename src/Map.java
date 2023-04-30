@@ -3,7 +3,7 @@ public interface Map<K, V> {
     boolean isEmpty();
 
     V get(K key);
-    V put(K key, V value);
+    V put(K key);
     V remove(K key);
     Iterable<K> keySet();
     Iterable<V> values();

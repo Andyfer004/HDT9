@@ -1,42 +1,26 @@
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
+import structure5.*;
+import java.util.HashMap;
 
-public class Factory {
-
-    public static Map<String, String> createMap() {
-        Map<String, String> map = null;
-
-        Properties properties = new Properties();
-        InputStream input = null;
-
-        try {
-            input = new FileInputStream("config.properties");
-            properties.load(input);
-
-            String mapType = properties.getProperty("mapType");
-
-            if (mapType.equals("SplayTree")) {
-                map = new SplayTree<>();
-            } else if (mapType.equals("RedBlackTreeMap")) {
-                map = new RedBlackTreeMap<>();
-            } else {
-                throw new IllegalArgumentException("Invalid map type specified in configuration file.");
-            }
-
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+public class Factory<K extends Comparable<K>, V> {
+    /**
+     * Devuelve la implementación seleccionada
+     * @param option seleccion de la implementacion
+     * @return IMaping implementacion seleccionada
+     */
+    public Map<K, V> getMap(int option) {
+        switch(option) {
+            case 1:
+                System.out.println("Se seleccionó HashMap");
+                return (Map<K, V>) new HashMap<K, V>();
+            case 2:
+                System.out.println("Se seleccionó Red Black Tree");
+                return new RedBlackTree<K, V>();
+            case 3:
+                System.out.println("Se seleccionó Splay Tree");
+                return (Map<K, V>) new SplayTree<K, V>();
+            default:
+                System.out.println("Opción inválida");
+                return null;
         }
-
-        return map;
     }
 }

@@ -1,364 +1,628 @@
-import java.util.*;
+import java.util.NoSuchElementException;
 
-public class RedBlackTree<K extends Comparable<K>, V> implements Map<K, V> {
-    private Node<K, V> root;
-    private int size;
-    private final Comparator<? super K> comparator;
+public class RedBlackTree<Key extends Comparable<Key>, Value> implements Map <Key,Value> {
 
-    private static final boolean RED = true;
+    private static final boolean RED   = true;
     private static final boolean BLACK = false;
 
-    private static class Node<K extends Comparable<K>, V> {
-        K key;
-        V value;
-        Node<K, V> left;
-        Node<K, V> right;
-        boolean color;
-        int size;
+    private Node root;     // root of the BST
 
-        public Node(K key, V value, boolean color, int size) {
+    // BST helper node data type
+    private class Node {
+        private Key key;           // key
+        private Value val;         // associated data
+        private Node left, right;  // links to left and right subtrees
+        private boolean color;     // color of parent link
+        private int size;          // subtree count
+
+        public Node(Key key, Value val, boolean color, int size) {
             this.key = key;
-            this.value = value;
+            this.val = val;
             this.color = color;
             this.size = size;
         }
     }
 
+    /**
+     * inicia con el primero vacio
+     */
     public RedBlackTree() {
-        this.comparator = null;
     }
 
-    public RedBlackTree(Comparator<? super K> comparator) {
-        this.comparator = comparator;
+    /**
+     * identificador de nodos
+     * @param x nodo
+     * @return color
+     */
+    // is node x red; false if x is null ?
+    private boolean isRed(Node x) {
+        if (x == null) return false;
+        return x.color == RED;
     }
 
-    @Override
+    // number of node in subtree rooted at x; 0 if x is null
+    private int size(Node x) {
+        if (x == null) return 0;
+        return x.size;
+    }
+
+
+    /**
+     * size
+     * @return el numero de valor-llave
+     */
     public int size() {
-        return size;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return size == 0;
-    }
-
-    @Override
-    public boolean containsKey(Object key) {
-        return get(key) != null;
-    }
-
-    @Override
-    public boolean containsValue(Object value) {
-        for (Entry<K, V> entry : entrySet()) {
-            if (entry.getValue().equals(value)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public V get(Object key) {
-        if (root == null) {
-            return null;
-        }
-        Node<K, V> x = root;
-        while (x != null) {
-            int cmp = compare(key, x.key);
-            if (cmp < 0) {
-                x = x.left;
-            } else if (cmp > 0) {
-                x = x.right;
-            } else {
-                return x.value;
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public V put(K key, V value) {
-        if (key == null) {
-            throw new NullPointerException("Cannot insert null key.");
-        }
-        Node<K, V> newNode = new Node<>(key, value, RED, 1);
-        root = put(root, newNode);
-        root.color = BLACK;
-        return newNode.value;
-    }
-
-    private Node<K, V> put(Node<K, V> h, Node<K, V> newNode) {
-        if (h == null) {
-            size++;
-            return newNode;
-        }
-        int cmp = compare(newNode.key, h.key);
-        if (cmp < 0) {
-            h.left = put(h.left, newNode);
-        } else if (cmp > 0) {
-            h.right = put(h.right, newNode);
-        } else {
-            h.value = newNode.value;
-        }
-
-        if (isRed(h.right) && !isRed(h.left)) {
-            h = rotateLeft(h);
-        }
-        if (isRed(h.left) && isRed(h.left.left)) {
-            h = rotateRight(h);
-        }
-        if (isRed(h.left) && isRed(h.right)) {
-            flipColors(h);
-        }
-        h.size = size(h.left) + size(h.right) + 1;
-        return h;
-    }
-
-    @Override
-    public V remove(Object key) {
-        if (key == null) {
-            return null;
-        }
-        if (!containsKey(key)) {
-            return null;
-        }
-        V oldValue = get(key);
-        root = remove(root, key);
-        if (!isEmpty()) {
-            root.color = BLACK;
-        }
-        size--;
-        return oldValue;
+        return size(root);
     }
 
     /**
-     * Recursive helper method to remove a key-value pair from the tree.
-     *
-     * @param node the root of the subtree to search for the key
-     * @param key  the key to remove
-     * @return the new root of the subtree after the removal
+     * isEmpty
+     * @return verifica si esta vacio
      */
-    private Node remove(Node node, Object key) {
-        if (node == null) {
-            return null;
-        }
-        if (key.compareTo(node.key) < 0) {
-            if (!isRed(node.left) && !isRed(node.left.left)) {
-                node = moveRedLeft(node);
-            }
-            node.left = remove(node.left, key);
-        } else {
-            if (isRed(node.left)) {
-                node = rotateRight(node);
-            }
-            if (key.equals(node.key) && (node.right == null)) {
-                return null;
-            }
-            if (!isRed(node.right) && !isRed(node.right.left)) {
-                node = moveRedRight(node);
-            }
-            if (key.equals(node.key)) {
-                Node successor = getMinNode(node.right);
-                node.key = successor.key;
-                node.value = successor.value;
-                node.right = deleteMin(node.right);
-            } else {
-                node.right = remove(node.right, key);
-            }
-        }
-        return balance(node);
-    }
-
-    /**
-     * Helper method to get the node with the minimum key in a subtree.
-     *
-     * @param node the root of the subtree
-     * @return the node with the minimum key in the subtree
-     */
-    private Node getMinNode(Node node) {
-        while (node.left != null) {
-            node = node.left;
-        }
-        return node;
-    }
-
-    /**
-     * Helper method to delete the node with the minimum key in a subtree.
-     *
-     * @param node the root of the subtree
-     * @return the new root of the subtree after the removal
-     */
-    private Node deleteMin(Node node) {
-        if (node.left == null) {
-            return null;
-        }
-        if (!isRed(node.left) && !isRed(node.left.left)) {
-            node = moveRedLeft(node);
-        }
-        node.left = deleteMin(node.left);
-        return balance(node);
-    }
-
-    /**
-     * Helper method to balance a node and its children in a red-black tree.
-     *
-     * @param node the root of the subtree to balance
-     * @return the new root of the subtree after balancing
-     */
-    private Node balance(Node node) {
-        if (isRed(node.right)) {
-            node = rotateLeft(node);
-        }
-        if (isRed(node.left) && isRed(node.left.left)) {
-            node = rotateRight(node);
-        }
-        if (isRed(node.left) && isRed(node.right)) {
-            flipColors(node);
-        }
-        node.size = size(node.left) + size(node.right) + 1;
-        return node;
-    }
-
-    /**
-     * Helper method to move a red node to the left child of its parent.
-     *
-     * @param node the node to move
-     * @return the new root of the subtree after the move
-     */
-    private Node moveRedLeft(Node node) {
-        flipColors(node);
-        if (node.right != null && isRed(node.right.left)) {
-            node.right = rotateRight(node.right);
-            node = rotateLeft(node);
-            flipColors(node);
-        }
-        return node;
-    }
-
-    private Node moveRedRight(Node node) {
-        flipColors(node);
-        if (node.left != null && isRed(node.left.left)) {
-            node = rotateRight(node);
-            flipColors(node);
-        }
-        return node;
-    }
-
-    private Node balance(Node node) {
-        if (isRed(node.right)) {
-            node = rotateLeft(node);
-        }
-        if (isRed(node.left) && isRed(node.left.left)) {
-            node = rotateRight(node);
-        }
-        if (isRed(node.left) && isRed(node.right)) {
-            flipColors(node);
-        }
-        return node;
-    }
-
-    private boolean isRed(Node node) {
-        return (node != null && node.color == RED);
-    }
-
-    private void flipColors(Node node) {
-        node.color = !node.color;
-        node.left.color = !node.left.color;
-        node.right.color = !node.right.color;
-    }
-
-    private Node rotateLeft(Node node) {
-        Node newRoot = node.right;
-        node.right = newRoot.left;
-        newRoot.left = node;
-        newRoot.color = node.color;
-        node.color = RED;
-        return newRoot;
-    }
-
-    private Node rotateRight(Node node) {
-        Node newRoot = node.left;
-        node.left = newRoot.right;
-        newRoot.right = node;
-        newRoot.color = node.color;
-        node.color = RED;
-        return newRoot;
-    }
-
-    @Override
-    public Set<Map.Entry<K, V>> entrySet() {
-        Set<Map.Entry<K, V>> set = new HashSet<>();
-        if (root != null) {
-            addEntries(root, set);
-        }
-        return set;
-    }
-
-    private void addEntries(Node node, Set<Map.Entry<K, V>> set) {
-        if (node.left != null) {
-            addEntries(node.left, set);
-        }
-        set.add(new AbstractMap.SimpleEntry<>(node.key, node.value));
-        if (node.right != null) {
-            addEntries(node.right, set);
-        }
-    }
-
-    @Override
-    public int size() {
-        return size;
-    }
-
-    @Override
     public boolean isEmpty() {
         return root == null;
     }
 
-    @Override
-    public boolean containsKey(Object key) {
-        return get(key) != null;
+
+    /**
+     *  Standard BST search.
+     */
+
+
+    /**
+     * Retorna valor asociado
+     * @param key llave
+     * @return valor asociado
+     * @throws IllegalArgumentException
+     */
+    public Value get(Key key) {
+        if (key == null) throw new IllegalArgumentException("argument to get() is null");
+        return get(root, key);
     }
 
     @Override
-    public boolean containsValue(Object value) {
-        for (Entry<K, V> entry : entrySet()) {
-            if (entry.getValue().equals(value)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public V put(K key, V value) {
-        if (key == null) {
-            return null;
-        }
-        root = put(root, key, value);
-        root.color = BLACK;
+    public Value put(Key key) {
         return null;
     }
 
-    private Node put(Node node, K key, V value) {
-        if (node == null) {
-            size++;
-            return new Node(key, value, RED);
+    @Override
+    public Value remove(Key key) {
+        return null;
+    }
+
+    @Override
+    public Iterable<Key> keySet() {
+        return null;
+    }
+
+    @Override
+    public Iterable<Value> values() {
+        return null;
+    }
+
+    @Override
+    public Iterable<Entry<Key, Value>> entrySet() {
+        return null;
+    }
+
+
+    // value associated with the given key in subtree rooted at x; null if no such key
+    private Value get(Node x, Key key) {
+        while (x != null) {
+            int cmp = key.compareTo(x.key);
+            if      (cmp < 0) x = x.left;
+            else if (cmp > 0) x = x.right;
+            else              return x.val;
         }
-        if (key.compareTo(node.key) < 0) {
-            node.left = put(node.left, key, value);
-        } else if (key.compareTo(node.key) > 0) {
-            node.right = put(node.right, key, value);
-        } else {
-            node.value = value;
+        return null;
+    }
+
+    /**
+     * busca
+     * @param key llave
+     * @return true or false
+     * @throws IllegalArgumentException dependiendo de la busqueda
+     */
+    public boolean search(Key key) {
+        return get(key) != null;
+    }
+
+    /**
+     *  Red-black tree insertion.
+     **/
+
+    /**
+     * Inserts the specified key-value pair into the symbol table, overwriting the old
+     * value with the new value if the symbol table already contains the specified key.
+     * Deletes the specified key (and its associated value) from this symbol table
+     * if the specified value is {@code null}.
+     *
+     * @param key the key
+     * @param val the value
+     * @throws IllegalArgumentException if {@code key} is {@code null}
+     */
+    public void add(Key key, Value val) {
+        if (key == null) throw new IllegalArgumentException("first argument to add() is null");
+        if (val == null) {
+            delete(key);
+            return;
         }
-        if (isRed(node.right) && !isRed(node.left)) {
-            node = rotateLeft(node);
+
+        root = add(root, key, val);
+        root.color = BLACK;
+        // assert check();
+    }
+
+    // insert the key-value pair in the subtree rooted at h
+    private Node add(Node h, Key key, Value val) {
+        if (h == null) return new Node(key, val, RED, 1);
+
+        int cmp = key.compareTo(h.key);
+        if      (cmp < 0) h.left  = add(h.left,  key, val);
+        else if (cmp > 0) h.right = add(h.right, key, val);
+        else              h.val   = val;
+
+        // fix-up any right-leaning links
+        if (isRed(h.right) && !isRed(h.left))      h = rotateLeft(h);
+        if (isRed(h.left)  &&  isRed(h.left.left)) h = rotateRight(h);
+        if (isRed(h.left)  &&  isRed(h.right))     flipColors(h);
+        h.size = size(h.left) + size(h.right) + 1;
+
+        return h;
+    }
+
+    /***************************************************************************
+     *  Red-black tree deletion.
+     ***************************************************************************/
+
+    /**
+     * Removes the smallest key and associated value from the symbol table.
+     * @throws NoSuchElementException if the symbol table is empty
+     */
+    public void deleteMin() {
+        if (isEmpty()) throw new NoSuchElementException("BST underflow");
+
+        // if both children of root are black, set root to red
+        if (!isRed(root.left) && !isRed(root.right))
+            root.color = RED;
+
+        root = deleteMin(root);
+        if (!isEmpty()) root.color = BLACK;
+        // assert check();
+    }
+
+    // delete the key-value pair with the minimum key rooted at h
+    private Node deleteMin(Node h) {
+        if (h.left == null)
+            return null;
+
+        if (!isRed(h.left) && !isRed(h.left.left))
+            h = moveRedLeft(h);
+
+        h.left = deleteMin(h.left);
+        return balance(h);
+    }
+
+
+    /**
+     * Removes the largest key and associated value from the symbol table.
+     * @throws NoSuchElementException if the symbol table is empty
+     */
+    public void deleteMax() {
+        if (isEmpty()) throw new NoSuchElementException("BST underflow");
+
+        // if both children of root are black, set root to red
+        if (!isRed(root.left) && !isRed(root.right))
+            root.color = RED;
+
+        root = deleteMax(root);
+        if (!isEmpty()) root.color = BLACK;
+        // assert check();
+    }
+
+    // delete the key-value pair with the maximum key rooted at h
+    private Node deleteMax(Node h) {
+        if (isRed(h.left))
+            h = rotateRight(h);
+
+        if (h.right == null)
+            return null;
+
+        if (!isRed(h.right) && !isRed(h.right.left))
+            h = moveRedRight(h);
+
+        h.right = deleteMax(h.right);
+
+        return balance(h);
+    }
+
+    /**
+     * Removes the specified key and its associated value from this symbol table
+     * (if the key is in this symbol table).
+     *
+     * @param  key the key
+     * @throws IllegalArgumentException if {@code key} is {@code null}
+     */
+    public void delete(Key key) {
+        if (key == null) throw new IllegalArgumentException("argument to delete() is null");
+        if (!search(key)) return;
+
+        // if both children of root are black, set root to red
+        if (!isRed(root.left) && !isRed(root.right))
+            root.color = RED;
+
+        root = delete(root, key);
+        if (!isEmpty()) root.color = BLACK;
+        // assert check();
+    }
+
+    // delete the key-value pair with the given key rooted at h
+    private Node delete(Node h, Key key) {
+        // assert get(h, key) != null;
+
+        if (key.compareTo(h.key) < 0)  {
+            if (!isRed(h.left) && !isRed(h.left.left))
+                h = moveRedLeft(h);
+            h.left = delete(h.left, key);
         }
-        if (isRed(node.left) && isRed(node.left.left))
-            node = rotateRight(node);
-        if (isRed(node.left) && isRed(node.right))
-            flipColors(node);
-        node.size = size(node.left) + size(node.right) + 1;
-        return node;
+        else {
+            if (isRed(h.left))
+                h = rotateRight(h);
+            if (key.compareTo(h.key) == 0 && (h.right == null))
+                return null;
+            if (!isRed(h.right) && !isRed(h.right.left))
+                h = moveRedRight(h);
+            if (key.compareTo(h.key) == 0) {
+                Node x = min(h.right);
+                h.key = x.key;
+                h.val = x.val;
+                // h.val = get(h.right, min(h.right).key);
+                // h.key = min(h.right).key;
+                h.right = deleteMin(h.right);
+            }
+            else h.right = delete(h.right, key);
+        }
+        return balance(h);
+    }
+
+    /***************************************************************************
+     *  Red-black tree helper functions.
+     ***************************************************************************/
+
+    // make a left-leaning link lean to the right
+    private Node rotateRight(Node h) {
+        assert (h != null) && isRed(h.left);
+        // assert (h != null) && isRed(h.left) &&  !isRed(h.right);  // for insertion only
+        Node x = h.left;
+        h.left = x.right;
+        x.right = h;
+        x.color = x.right.color;
+        x.right.color = RED;
+        x.size = h.size;
+        h.size = size(h.left) + size(h.right) + 1;
+        return x;
+    }
+
+    // make a right-leaning link lean to the left
+    private Node rotateLeft(Node h) {
+        assert (h != null) && isRed(h.right);
+        // assert (h != null) && isRed(h.right) && !isRed(h.left);  // for insertion only
+        Node x = h.right;
+        h.right = x.left;
+        x.left = h;
+        x.color = x.left.color;
+        x.left.color = RED;
+        x.size = h.size;
+        h.size = size(h.left) + size(h.right) + 1;
+        return x;
+    }
+
+    // flip the colors of a node and its two children
+    private void flipColors(Node h) {
+        // h must have opposite color of its two children
+        // assert (h != null) && (h.left != null) && (h.right != null);
+        // assert (!isRed(h) &&  isRed(h.left) &&  isRed(h.right))
+        //    || (isRed(h)  && !isRed(h.left) && !isRed(h.right));
+        h.color = !h.color;
+        h.left.color = !h.left.color;
+        h.right.color = !h.right.color;
+    }
+
+    // Assuming that h is red and both h.left and h.left.left
+    // are black, make h.left or one of its children red.
+    private Node moveRedLeft(Node h) {
+        // assert (h != null);
+        // assert isRed(h) && !isRed(h.left) && !isRed(h.left.left);
+
+        flipColors(h);
+        if (isRed(h.right.left)) {
+            h.right = rotateRight(h.right);
+            h = rotateLeft(h);
+            flipColors(h);
+        }
+        return h;
+    }
+
+    // Assuming that h is red and both h.right and h.right.left
+    // are black, make h.right or one of its children red.
+    private Node moveRedRight(Node h) {
+        // assert (h != null);
+        // assert isRed(h) && !isRed(h.right) && !isRed(h.right.left);
+        flipColors(h);
+        if (isRed(h.left.left)) {
+            h = rotateRight(h);
+            flipColors(h);
+        }
+        return h;
+    }
+
+    // restore red-black tree invariant
+    private Node balance(Node h) {
+        // assert (h != null);
+
+        if (isRed(h.right) && !isRed(h.left))    h = rotateLeft(h);
+        if (isRed(h.left) && isRed(h.left.left)) h = rotateRight(h);
+        if (isRed(h.left) && isRed(h.right))     flipColors(h);
+
+        h.size = size(h.left) + size(h.right) + 1;
+        return h;
+    }
+
+
+    /***************************************************************************
+     *  Utility functions.
+     ***************************************************************************/
+
+    /**
+     * Returns the height of the BST (for debugging).
+     * @return the height of the BST (a 1-node tree has height 0)
+     */
+    public int height() {
+        return height(root);
+    }
+    private int height(Node x) {
+        if (x == null) return -1;
+        return 1 + Math.max(height(x.left), height(x.right));
+    }
+
+    /***************************************************************************
+     *  Ordered symbol table methods.
+     ***************************************************************************/
+
+    /**
+     * Returns the smallest key in the symbol table.
+     * @return the smallest key in the symbol table
+     * @throws NoSuchElementException if the symbol table is empty
+     */
+    public Key min() {
+        if (isEmpty()) throw new NoSuchElementException("calls min() with empty symbol table");
+        return min(root).key;
+    }
+
+    // the smallest key in subtree rooted at x; null if no such key
+    private Node min(Node x) {
+        // assert x != null;
+        if (x.left == null) return x;
+        else                return min(x.left);
+    }
+
+    /**
+     * Returns the largest key in the symbol table.
+     * @return the largest key in the symbol table
+     * @throws NoSuchElementException if the symbol table is empty
+     */
+    public Key max() {
+        if (isEmpty()) throw new NoSuchElementException("calls max() with empty symbol table");
+        return max(root).key;
+    }
+
+    // the largest key in the subtree rooted at x; null if no such key
+    private Node max(Node x) {
+        // assert x != null;
+        if (x.right == null) return x;
+        else                 return max(x.right);
+    }
+
+
+    /**
+     * Returns the largest key in the symbol table less than or equal to {@code key}.
+     * @param key the key
+     * @return the largest key in the symbol table less than or equal to {@code key}
+     * @throws NoSuchElementException if there is no such key
+     * @throws IllegalArgumentException if {@code key} is {@code null}
+     */
+    public Key floor(Key key) {
+        if (key == null) throw new IllegalArgumentException("argument to floor() is null");
+        if (isEmpty()) throw new NoSuchElementException("calls floor() with empty symbol table");
+        Node x = floor(root, key);
+        if (x == null) throw new NoSuchElementException("argument to floor() is too small");
+        else           return x.key;
+    }
+
+    // the largest key in the subtree rooted at x less than or equal to the given key
+    private Node floor(Node x, Key key) {
+        if (x == null) return null;
+        int cmp = key.compareTo(x.key);
+        if (cmp == 0) return x;
+        if (cmp < 0)  return floor(x.left, key);
+        Node t = floor(x.right, key);
+        if (t != null) return t;
+        else           return x;
+    }
+
+    /**
+     * Returns the smallest key in the symbol table greater than or equal to {@code key}.
+     * @param key the key
+     * @return the smallest key in the symbol table greater than or equal to {@code key}
+     * @throws NoSuchElementException if there is no such key
+     * @throws IllegalArgumentException if {@code key} is {@code null}
+     */
+    public Key ceiling(Key key) {
+        if (key == null) throw new IllegalArgumentException("argument to ceiling() is null");
+        if (isEmpty()) throw new NoSuchElementException("calls ceiling() with empty symbol table");
+        Node x = ceiling(root, key);
+        if (x == null) throw new NoSuchElementException("argument to ceiling() is too small");
+        else           return x.key;
+    }
+
+    // the smallest key in the subtree rooted at x greater than or equal to the given key
+    private Node ceiling(Node x, Key key) {
+        if (x == null) return null;
+        int cmp = key.compareTo(x.key);
+        if (cmp == 0) return x;
+        if (cmp > 0)  return ceiling(x.right, key);
+        Node t = ceiling(x.left, key);
+        if (t != null) return t;
+        else           return x;
+    }
+
+    /**
+     * Seleccion
+     *
+     * @param  rank the order statistic
+     * @return the key in the symbol table of given {@code rank}
+     * @throws IllegalArgumentException unless {@code rank} is between 0 and
+     *        <em>n</em>–1
+     */
+    public Key select(int rank) {
+        if (rank < 0 || rank >= size()) {
+            throw new IllegalArgumentException("argument to select() is invalid: " + rank);
+        }
+        return select(root, rank);
+    }
+
+    /**
+     * seleccion llave
+     * @param x nodo
+     * @param rank rango
+     * @return la seleccion
+     */
+    private Key select(Node x, int rank) {
+        if (x == null) return null;
+        int leftSize = size(x.left);
+        if      (leftSize > rank) return select(x.left,  rank);
+        else if (leftSize < rank) return select(x.right, rank - leftSize - 1);
+        else                      return x.key;
+    }
+
+    /**
+     * Return the number of keys in the symbol table strictly less than {@code key}.
+     * @param key the key
+     * @return the number of keys in the symbol table strictly less than {@code key}
+     * @throws IllegalArgumentException if {@code key} is {@code null}
+     */
+    public int rank(Key key) {
+        if (key == null) throw new IllegalArgumentException("argument to rank() is null");
+        return rank(key, root);
+    }
+
+    /**
+     * rango
+     * @param key llave
+     * @param x nodo
+     * @return rango
+     */
+    private int rank(Key key, Node x) {
+        if (x == null) return 0;
+        int cmp = key.compareTo(x.key);
+        if      (cmp < 0) return rank(key, x.left);
+        else if (cmp > 0) return 1 + size(x.left) + rank(key, x.right);
+        else              return size(x.left);
+    }
+
+
+
+
+    /**
+     * Returns the number of keys in the symbol table in the given range.
+     *
+     * @param  lo minimum endpoint
+     * @param  hi maximum endpoint
+     * @return the number of keys in the symbol table between {@code lo}
+     *    (inclusive) and {@code hi} (inclusive)
+     * @throws IllegalArgumentException if either {@code lo} or {@code hi}
+     *    is {@code null}
+     */
+    public int size(Key lo, Key hi) {
+        if (lo == null) throw new IllegalArgumentException("first argument to size() is null");
+        if (hi == null) throw new IllegalArgumentException("second argument to size() is null");
+
+        if (lo.compareTo(hi) > 0) return 0;
+        if (search(hi)) return rank(hi) - rank(lo) + 1;
+        else              return rank(hi) - rank(lo);
+    }
+
+
+    /**
+     * size
+     * @return size
+     */
+    private boolean isBST() {
+        return isBST(root, null, null);
+    }
+
+    /**
+     * ver si esta correcto el redbalcktree
+     * @param x nodo
+     * @param min llave minima
+     * @param max llave maxima
+     * @return true or false
+     */
+    private boolean isBST(Node x, Key min, Key max) {
+        if (x == null) return true;
+        if (min != null && x.key.compareTo(min) <= 0) return false;
+        if (max != null && x.key.compareTo(max) >= 0) return false;
+        return isBST(x.left, min, x.key) && isBST(x.right, x.key, max);
+    }
+
+    /**
+     * ver si esta correcto
+     * @return
+     */
+    private boolean isSizeConsistent() { return isSizeConsistent(root); }
+    private boolean isSizeConsistent(Node x) {
+        if (x == null) return true;
+        if (x.size != size(x.left) + size(x.right) + 1) return false;
+        return isSizeConsistent(x.left) && isSizeConsistent(x.right);
+    }
+
+
+    /**
+     * ver si es 23
+     * @return true or false
+     */
+    private boolean is23() { return is23(root); }
+    private boolean is23(Node x) {
+        if (x == null) return true;
+        if (isRed(x.right)) return false;
+        if (x != root && isRed(x) && isRed(x.left))
+            return false;
+        return is23(x.left) && is23(x.right);
+    }
+
+    /**
+     * ver si esta balanceado
+     * @return true or false
+     */
+    private boolean isBalanced() {
+        int black = 0;     // number of black links on path from root to min
+        Node x = root;
+        while (x != null) {
+            if (!isRed(x)) black++;
+            x = x.left;
+        }
+        return isBalanced(root, black);
+    }
+
+    /**
+     * ver si esta balanceado
+     * @param x nodo
+     * @param black negros cantidad
+     * @return true or false
+     */
+    private boolean isBalanced(Node x, int black) {
+        if (x == null) return black == 0;
+        if (!isRed(x)) black--;
+        return isBalanced(x.left, black) && isBalanced(x.right, black);
     }
 }
